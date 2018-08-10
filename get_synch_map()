@@ -1,0 +1,68 @@
+%Programmed by James Yao 8/2/2018
+%Finds synchronization and creates a map
+function O = get_synch_map()
+
+    %Renamed pathway
+    pathway1 = 'C:\Users\Ayan\Documents\James\APOE Experiment 1\DIV18\Renamed';
+    pathwaySave = 'C:\Users\Ayan\Documents\James\APOE Experiment 1\DIV18\Synchronization';
+    
+    files = dir(pathway1);
+    files = struct2cell(files);
+    files = files(1,:); % filenames for all files in the folder
+    files = files(3:end); % the dir function always appends two useless filenames to the beginning of the vector
+    
+    for ii = 1:length(files)
+        
+        pathway12 = strcat(pathway1, '\', files{ii});
+        vars = load(pathway12);
+        var_names = fieldnames(vars);
+        vars = struct2cell(vars);
+        elec_map = [nan, 21:10:71, nan; 12:10:82; 13:10:83; 14:10:84 ; 15:10:85 ; 16:10:86 ; 17:10:87 ; nan, 28:10:78, nan];
+        dri_tra = zeros(length(vars));
+        
+        for jj = 1:length(vars)-1
+            adch1 = vars{jj};
+            for kk = jj+1:length(vars)
+                adch2 = vars{kk};
+                minlength = min(length(adch1), length(adch2));
+                adch_min = [];
+                adch_max = [];
+                if minlength == length(adch1)
+                    adch_min = adch1;
+                    adch_max = adch2;
+                    min1 = true;
+                else
+                    adch_min = adch2;
+                    adch_max = adch1;
+                    min1 = false;
+                end
+                driv1 = zeros(minlength, 1);
+                driv2 = zeros(minlength, 1);
+                for ll = 1:length(adch_max)
+                    [x, y] = min(abs(adch_min-adch_max(ll)));
+                    if adch_max(ll) - adch_min(y) <= 0
+                        driv1(y) = x;
+                    else
+                        driv2(y) = x;
+                    end
+                end
+                if mean(driv1) <= mean(driv2)
+                    if min1 == true
+                        dri_tra(jj, kk) = mean(driv1);
+                        dri_tra(kk, jj) = -1 * mean(driv1);
+                    else
+                        dri_tra(kk, jj) = mean(driv1);
+                        dri_tra(jj, kk) = -1 * mean(driv1);
+                    end
+                else
+                    if min1 == true
+                        dri_tra(kk, jj) = mean(driv2);
+                        dri_tra(jj, kk) = -1 * mean(driv2);
+                    else
+                        dri_tra(jj, kk) = mean(driv2);
+                        dri_tra(kk, jj) = -1 * mean(driv2);
+                    end
+                end
+            end
+        end
+    end
